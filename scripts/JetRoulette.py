@@ -8,7 +8,7 @@ from pathlib import Path
 from playsound import playsound # playsound
 from winsound import PlaySound,SND_ASYNC,SND_FILENAME
 from threading import Thread
-clickSound = "..\\random-sounds\\clickfast.wav"
+clickSound = "..\\random-sounds\\clickfast.wav" # if running in VS Code or another editor like it, ensure you're running from the scripts directory, not the base git directory
 root = ThemedTk(theme="kroc",themebg=1,toplevel=1,background=1) # yes i know kroc is terrible. this isn't a professional script
 root.title("Jet Roulette")
 incVar = IntVar()
