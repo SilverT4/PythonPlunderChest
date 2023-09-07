@@ -67,7 +67,6 @@ class SpotiWidget(ThemedTk):
         self.spot:Player = None
         self.now_playing:Track|Episode = None
         self.context:Context = None
-        self.ctxObject:Artist|Album|Show|Playlist = None
         self.CURRENT_TRACKID:str = None
 
         self.download_mode = "cache" if "--force-redownload" not in extraArgs else "forced"
