@@ -45,7 +45,7 @@ class HelpDocumentation():
         self.description = desc
         self.params = [Parameter(**p) for p in params]
 
-    def do(self,*args):
+    def do(self,args:list):
         if args[0] == '-g':
             self.showHelp()
         elif args[0] == '-o':
@@ -90,7 +90,6 @@ class HelpDocumentation():
             raise ValueError("File parameter is None, cannot save file.")
 
 hd = HelpDocumentation("Python Plunder Chest Help","Holds a Python class which represents help documentation for a class. This is meant to make it easier for me to show help documentation in a script.",[{"name": "-g","description": "Tells the script calling the class to show a Tkinter window."},{"name":"-o <filepath>","description":"Tells the script calling the class to output the help contents to a file. Raises an exception if filepath is not specified."}])
-print(argv)
 if '-g' in argv:
     hd.showHelp()
 elif '-o' in argv:
