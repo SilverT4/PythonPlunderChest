@@ -165,3 +165,6 @@ scripts/IMG_CACHE/
 # Also ignoring the TMP_* jpgs with the exclusion of PFP, again for copyright. PFP has my profile picture which i made
 scripts/TMP_*.*
 !scripts/TMP_PFP.JPG
+
+# Ignore the atsuover gagababy image cause I don't have rights to it
+gagababy.png
