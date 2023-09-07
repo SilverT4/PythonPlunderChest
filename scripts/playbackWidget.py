@@ -11,7 +11,7 @@ from urllib.request import urlretrieve
 from winsound import MessageBeep
 from threading import Thread,ThreadError
 from globals.helpDocs import HelpDocumentation
-from globals.relativeTime import relative_time as rt
+from globals.relativeTime import relative2 as rt
 from PIL import Image, ImageTk
 from spotify.album import Album
 from spotify.artist import Artist
@@ -26,16 +26,25 @@ from spotify.user import User
 from spotipy.exceptions import SpotifyException
 from ttkthemes import ThemedTk
 
-acceptedArguments = [{"name": "--clean", "description": "Utility with which to clean up the IMG_CACHE folder of the script's directory."}, {"name": "--force-redownloads", "description": "Force the script to redownload album/show cover images every time, instead of using the cache."}, {"name": "--use-context","description": "When updating the now playing widget, set the title to use the name of the current context object, instead of the current track or episode title."}, {"name": "<no arguments>", "description": "Run with no parameters to use the widget itself."}]
-helpDoc = HelpDocumentation("Spotify Playback Widget", "Silly little Python script that displays your currently playing song/podcast in a little window at the bottom right of your screen.\nThe window resizes automatically when the song/podcast data changes, and also updates the elapsed time automatically.",acceptedArguments)
+acceptedArguments = [{"name": "--clean", "description": "Utility with which to clean up the IMG_CACHE folder of the script's directory.\n\nAdd --continue as an argument to open the widget after cleanup."}, {"name": "--force-redownloads", "description": "Force the script to redownload album/show cover images every time, instead of using the cache."}, {"name": "--use-context","description": "When updating the now playing widget, set the title to use the name of the current context object, instead of the current track or episode title."}, {"name": "<no arguments>", "description": "Run with no parameters to use the widget itself."}]
+helpDoc = HelpDocumentation("Spotify Playback Widget", "Silly little Python script that displays your currently playing song/podcast in a little window at the bottom right of your screen.\nThe window resizes automatically when the song/podcast data changes, and also updates the elapsed time automatically.\nYou can also change its appearance to any theme supported by `ThemedTk` by right clicking anywhere in the main window.",acceptedArguments)
 class SpotiWidget(ThemedTk):
     """
     Custom subclass of `ThemedTk` to represent the Spotify Playback Widget. Additional arguments come from `sys.argv`, meaning you'd have to run this through the command line to use them.
 
     Use the `--help` argument to display help.
     """
-    def __init__(self, *extraArgs, screenName: str | None = ..., baseName: str | None = ..., className: str = ..., useTk: bool = ..., sync: bool = ..., use: str | None = ..., **extraKeys) -> None:
-        super().__init__(screenName=None, baseName=None, className="deez nuts", useTk=1, sync=1, use=None, theme='scidmint', toplevel=1, themebg=1, background=1, gif_override=1)
+    def __init__(self, theme:str|None = ..., *extraArgs, **extraKeys) -> None:
+        """```markdown
+        Initialize the Spotify Display Widget
+        
+        Command-line arguments are listed in `acceptedArguments`, and here:
+        
+        * `--force-redownload` - **Not recommended with the way this widget is coded at the moment.** Forces the widget to redownload album/show images on *every* update.
+        * `--use-context` - Sets the widget's titlebar to the current context's object name if applicable.
+        ```
+        """
+        super().__init__(screenName=None, baseName=None, className="deez nuts", useTk=1, sync=1, use=None, theme=theme, toplevel=1, themebg=1, background=1, gif_override=1)
 
         self.title("Spotify Display Widget")
         self.resizable(0,0)
@@ -74,6 +83,7 @@ class SpotiWidget(ThemedTk):
         self.DL_LBL.grid(row=0)
         self.DownloadWindow.withdraw()
 
+        # These threads were a suggestion when I was using ChatGPT to try and figure out how to stop the application from freezing so much
         self.updateThread = Thread(target=self.refresh_spot)
         self.updateThread.daemon = True
         self.updateThread.start()
@@ -218,6 +228,51 @@ class SpotiWidget(ThemedTk):
 dick = {}
 for thing in ["screenName","baseName","className","useTk","sync","use"]:
     dick.__setitem__(thing,None)
+if "--clean" in argv:
+    root = Tk()
+    root.title("SDW Image Cache")
+    rootFrame = Frame(root)
+    rootFrame.grid()
+    def cleanup(s:Event=None):
+        from os import chdir,remove,listdir
+        from time import sleep
+        from winsound import PlaySound,SND_FILENAME as sfn
+        chdir("IMG_CACHE")
+        files = listdir()
+        lbl.configure(text="Now cleaning up the image cache folder...",image="::tk::icons::information")
+        btYes.destroy()
+        btNo.destroy()
+        pbar = Progressbar(rootFrame,value=0,maximum=len(files))
+        pbar.grid(row=1,columnspan=2)
+        lmao = StringVar()
+        Label(rootFrame,textvariable=lmao).grid(columnspan=2)
+        lb = Listbox(rootFrame)
+        for file in files:
+            sleep(0.25)
+            lmao.set(file)
+            pbar.step()
+            root.update()
+            try:
+                remove(file)
+            except FileNotFoundError:
+                print(f"COULD NOT FIND {file.upper()}, WAS IT DELETED MANUALLY??")
+                PlaySound("../../random-sounds/mparty8_ballyhoo_09.wav",sfn)
+            except PermissionError as egg:
+                lb.insert(END,f"{egg.filename} could not be deleted.")
+            finally:
+                print(file)
+        if not "--continue" in argv: quit() # Specify "--continue" in the CLI to open the widget proper after cleanup
+    lbl = Label(rootFrame,text="By cleaning the image cache, image downloads may take longer to complete.\nDo you wish to continue?",image="::tk::icons::question",compound="top")
+    lbl.grid(columnspan=2)
+    btYes = Button(rootFrame,text='Yes',underline=1,command=cleanup)
+    btYes.grid(row=1,column=0)
+    btNo = Button(rootFrame,text='No',underline=1,command=quit)
+    btNo.grid(row=1,column=1)
+    root.bind("y",cleanup)
+    root.bind("n",quit)
+    root.mainloop()
+    if not "--continue" in argv: quit() # Specify "--continue" in the CLI to open the widget proper after cleanup
+    
 if not "--help" in argv:
     spot = SpotiWidget(*argv,**dick,theme="scidmint",toplevel=1,themebg=1,background=1)
     spot.mainloop()
