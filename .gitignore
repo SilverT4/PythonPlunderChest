@@ -168,3 +168,10 @@ scripts/TMP_*.*
 
 # Ignore the atsuover gagababy image cause I don't have rights to it
 gagababy.png
+
+# Ignore the Ballyhoo and Toad sounds
+random-sounds/mk64_toad05.wav
+random-sounds/mparty8_ballyhoo_09.wav
+
+# ignore thumbs
+Thumbs.db
