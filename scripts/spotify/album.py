@@ -1,9 +1,11 @@
 from typing import Any
 from spotify.baseObject import SpotifyObject
-from spotify.artist import SimplifiedArtist
-from spotify.track import SimplifiedTrack
+from spotify.artist import Artist
+from spotify.track import Track
 from spotify.image import SpotifyImage
-class TracksObject(SpotifyObject):
+from spotify.legalese import CopyrightObject
+from spotify.iterator import SpotifyIterable
+class TracksObject(SpotifyIterable):
     """
     Custom object class to represent the "tracks" variable in an Album object.
 
@@ -21,23 +23,24 @@ class TracksObject(SpotifyObject):
         self.offset:int = data['offset']
         self.previous:str|None = data['previous']
         self.total:int = data['total']
-        self.items:list[SimplifiedTrack] = [SimplifiedTrack(js) for js in data['items']]
-        super().__init__(self,data)
+        #self.items:list[SimplifiedTrack] = [SimplifiedTrack(js) for js in data['items']]
+        super().__init__(self,data,'track',Track)
 class Album(SpotifyObject):
     """
-    Custom Python object subclass to represent a Spotify Album.
+    Custom subclass object to represent an Album returned by the Spotify API
 
-    Variables specific to this subclass:
-    * str `album_type` - self-explanatory. Can be "album", "single", or "compilation"
-    * list `artists` - self-explanatory.
-    * list `genres` - self-explanatory.
-    * list `images` - the cover art of the album in various sizes.
-    * int `popularity` - self-explanatory. Ranges between 0 to 100, with higher numbers being more popular.
-    * int `total_tracks` - self-explanatory.
-    * list `tracks` - self-explanatory.
-    * str `release_date` - the date the album was first released.
-    * str `release_date_precision` - the precision of which the `release_date` value is known. Can be "year", "month", or "day"
-    * custom object `restrictions` - Included if a content restriction is applied. None if not.
+    Subclass-specific variables:
+    - str `name` - The name of the album
+    - str `release_date` - The release date of the album
+    - str `release_date_precision` - The precision of the release date. Usually "day", "month", or "year".
+    - int `total_tracks` - The total number of tracks in the album
+    - list `artists` - List of Artist objects representing the album's artists
+    - list `genres` - List of genres associated with the album
+    - str `label` - The record label of the album
+    - int `popularity` - The popularity score of the album
+    - list `tracks` - List of Track objects representing the album's tracks
+    - str `album_type` - The type of album (e.g., 'album', 'single')
+    - list `copyrights` - If included by the API, this lists the copyrights of the album.
     """
     def __init__(self, data: dict[str, Any]):
         """
@@ -46,11 +49,11 @@ class Album(SpotifyObject):
         This sets the `album_type`, `artists`, `genres`, `images`, `popularity`, `total_tracks`, and `tracks` variables.
         """
         self.album_type:str = data['album_type']
-        self.artists:list[SimplifiedArtist] = [SimplifiedArtist(js) for js in data['artists']]
+        self.artists:list[Artist] = [Artist(js) for js in data['artists']]
         try:
             self.genres:list[str] = data['genres']
         except KeyError:
-            self.genres = []
+            self.genres = ['N/A']
         self.images:list[SpotifyImage] = [SpotifyImage(s) for s in data['images']]
         try:
             self.popularity:int = data['popularity']
@@ -67,5 +70,14 @@ class Album(SpotifyObject):
         except KeyError:
             self.release_date:str = "N/A"
             self.release_date_precision = None
+        try:
+            self.copyrights:list[CopyrightObject] = [CopyrightObject(c) for c in data['copyrights']]
+        except KeyError:
+            self.copyrights = []
         self.name = data['name']
         super().__init__(data)
+
+    def __str__(self):
+        return f'{self.name}\n{", ".join([artist.name for artist in self.artists])}\nReleased {self.release_date}\nGenres: {", ".join(self.genres)}\nTrack count: {self.total_tracks}'
+    def __repr__(self):
+        return f'{self.name} by {", ".join([artist.name for artist in self.artists])}'
