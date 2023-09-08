@@ -2,35 +2,15 @@ from typing import Any
 from spotify.baseObject import SpotifyObject
 from spotify.externalStuff import ExternalURLs
 from spotify.image import SpotifyImage
-class SimplifiedArtist(SpotifyObject):
-    """
-    Custom Python subclass object to represent a simplified view of an Artist object.
-
-    Variables specific to this subclass:
-    * `external_urls` - custom object, external URLs for the artist.
-    * `name` - str, self-explanatory.
-    """
-    def __init__(self, data: dict[str, Any]):
-        """
-        Initialise a Simplified Artist object.
-
-        This sets the `external_urls` and `name` variables.
-        """
-        self.external_urls:ExternalURLs = data['external_urls']
-        self.name:str = data['name']
-        super().__init__(data)
-
 class Artist(SpotifyObject):
     """
-    Custom subclass object to represent an Artist object.
+    Custom subclass object to represent an Artist returned by the Spotify API
 
-    Subclass-specific variables:
-    * custom object `external_urls` - external URLs for the artist.
-    * int `followers` - self-explanatory.
-    * list `genres` - self-explanatory.
-    * list `images` - images of the artist.
-    * int `popularity` - popularity of the artist. The value will be between 0 and 100, with 100 being the most popular. The artist's popularity is calculated from the popularity of all the artist's tracks. (Copied from the Spotify documentation)
-    * str `name` - self-explanatory.
+    This sets the following variables, if included in the `data` argument:
+    - str `name` - The name of the artist
+    - int `followers` - The number of Spotify followers the artist has
+    - list `genres` - List of genres associated with the artist
+    - int `popularity` - The popularity score of the artist
     """
     def __init__(self, data: dict[str, Any]):
         self.external_urls:ExternalURLs = data['external_urls']
@@ -53,5 +33,7 @@ class Artist(SpotifyObject):
             self.popularity = None
         self.name:str = data['name']
         super().__init__(data)
+    def __str__(self):
+        return self.name
     def __repr__(self):
         return self.name

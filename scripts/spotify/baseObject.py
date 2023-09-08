@@ -57,3 +57,7 @@ class SpotifyObject():
         except KeyError:
             self.images = []
             self.image = None
+        self.rawData:dict[str,Any] = data
+
+    def __init_subclass__(cls) -> None:
+        pass

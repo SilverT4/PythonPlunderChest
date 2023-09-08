@@ -32,7 +32,7 @@ class SimplifiedTrack(SpotifyObject):
     * bool `is_local` - True if the track is from a local file.
     """
     def __init__(self, data: dict[str, Any]):
-        self.artists:list[SimplifiedArtist] = [SimplifiedArtist(js) for js in data['artists']]
+        self.artists:list[Artist] = [Artist(js) for js in data['artists']]
         self.available_markets:list[str] = data['available_markets']
         self.disc_number:int = data['disc_number']
         self.duration_ms:int = data['duration_ms']
