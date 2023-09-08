@@ -18,6 +18,6 @@ for key,value in authWarns.items():
         print(value)
 
 canModifyPlaybackState = "user-modify-playback-state" in auth_scope
-auth = SpotifyOAuth(show_dialog=True,open_browser=True,scope=auth_scope)
+auth = SpotifyOAuth(show_dialog=True,open_browser=True,scope=auth_scope,requests_timeout=10)
 
 cli = Spotify(auth_manager=auth)
