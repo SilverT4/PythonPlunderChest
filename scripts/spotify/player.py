@@ -94,14 +94,26 @@ class Player(SpotifyObject):
     * custom object `actions` - Allowed actions based on the current context.
     """
     def __init__(self, data: dict[str, Any]):
-        self.device:Device = Device(data['device']) if 'device' in data else None
-        self.repeat_state:str = data['repeat_state']
-        self.shuffle_state:bool = data['shuffle_state']
-        self.context = Context(data['context']) if data['context'] else None
-        self.timestamp:int = data['timestamp']
-        self.progress_ms:int = data['progress_ms']
-        self.is_playing:bool = data['is_playing']
-        self.currently_playing_type:str = data['currently_playing_type']
-        self.item:Track|Episode = playerItem(data['item'],self.currently_playing_type)
-        self.actions:Actions = Actions(data['actions'])
+        if data:
+            self.device:Device = Device(data['device']) if 'device' in data else None
+            self.repeat_state:str = data['repeat_state']
+            self.shuffle_state:bool = data['shuffle_state']
+            self.context = Context(data['context']) if data['context'] else None
+            self.timestamp:int = data['timestamp']
+            self.progress_ms:int = data['progress_ms']
+            self.is_playing:bool = data['is_playing']
+            self.currently_playing_type:str = data['currently_playing_type']
+            self.item:Track|Episode = playerItem(data['item'],self.currently_playing_type)
+            self.actions:Actions = Actions(data['actions'])
+        else:
+            self.device:Device = None
+            self.repeat_state:str = ""
+            self.shuffle_state:bool = False
+            self.context:Context = None
+            self.timestamp:int = 0
+            self.progress_ms:int = 0
+            self.is_playing:bool = False
+            self.currently_playing_type:str = "unknown"
+            self.item:Track|Episode = None
+            self.actions:Actions = None
         super().__init__(data)
