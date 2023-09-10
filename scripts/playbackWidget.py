@@ -73,7 +73,7 @@ class SpotiWidget(ThemedTk):
 
         self.svar = StringVar(self)
 
-        self.mainimage = ImageTk.PhotoImage(Image.open("../gagababy.png").resize((64,64)))
+        self.mainimage = ImageTk.PhotoImage(Image.open("../gagababy.png").resize((64,64))) # If an exception is raised here, either create a file named "gagababy" in the parent directory, or just change this to another image path on your PC
         self.mainlabel = Label(self.mainframe,textvariable=self.svar,image=self.mainimage,compound='left')
         self.mainlabel.image = self.mainimage
         self.mainlabel.grid()
