@@ -94,7 +94,8 @@ Generally speaking, songs that are being played a lot now will have a higher pop
         self.popularity:int = data['popularity']
         self.preview_url:str|None = data['preview_url']
         self.track_number:int = data['track_number']
-        self.widgetText = f'{self.name}\n{", ".join(artist.name for artist in self.artists)}\n{self.album.name}'
+        self.widgetText = f'{self.name}\n{", ".join(artist.name for artist in self.artists)}'
+        if self.album.name != self.name: self.widgetText += f'\n{self.album.name}'
         if self.album:
             self.widgetImg = self.album.imgID
         else:

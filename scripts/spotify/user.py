@@ -29,4 +29,5 @@ class User(SpotifyObject):
             self.followers:int = data['followers']['total'] # see artist.py for why i do it like this
         except KeyError:
             self.followers = 0
+        self.widgetText = f'{self.display_name}\n{self.followers} followers'
         super().__init__(data)
