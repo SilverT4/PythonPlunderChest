@@ -1,18 +1,29 @@
+from globals.impexc import PackageException
+import platform
 from datetime import datetime
 from functools import partial
 from random import randint
 from sys import argv
 from os import path
 from time import sleep
-from tkinter import *
-from tkinter.ttk import *
+try:
+    from tkinter import *
+    from tkinter.ttk import *
+except ImportError:
+    sugstring = "Use your system's package manager to install this package.\n"
+    if platform.system() == 'Linux':
+        sugstring += "Please select your package manager from the list below:\n0. apt (Usually used on Debian-based Linux, such as Ubuntu or Linux Mint)\n1. pacman (Usually used on Arch Linux)\n2. dnf (Usually used on Fedora-based distributions)\n3. yum (Usually used on RHEL, CentOS, Oracle Linux)\n4. Other"
+        pkgThings = ["sudo apt install python3-tk","sudo pacman -S tk","sudo dnf install python3-tkinter","sudo yum install -y tkinter tk-devel","Search for how to install Tkinter on your distribution."]
+    raise PackageException('tkinter',sugstring,platform.system() == 'Linux',pkgThings or [])
 from traceback import format_exc, print_exc
 from urllib.request import urlretrieve
-from winsound import MessageBeep
 from threading import Thread,ThreadError
 from globals.helpDocs import HelpDocumentation
 from globals.relativeTime import relative2 as rt
-from PIL import Image, ImageTk
+try:
+    from PIL import Image, ImageTk
+except:
+    raise Exception()
 from spotify.album import Album
 from spotify.artist import Artist
 from spotify.contextTyper import contextObject
@@ -25,6 +36,8 @@ from spotify.track import Track
 from spotify.user import User
 from spotipy.exceptions import SpotifyException
 from ttkthemes import ThemedTk
+if platform.system() == 'Windows':
+    from winsound import MessageBeep
 
 acceptedArguments = [{"name": "--clean", "description": "Utility with which to clean up the IMG_CACHE folder of the script's directory.\n\nAdd --continue as an argument to open the widget after cleanup."}, {"name": "--force-redownloads", "description": "Force the script to redownload album/show cover images every time, instead of using the cache."}, {"name": "--use-context","description": "When updating the now playing widget, set the title to use the name of the current context object, instead of the current track or episode title."}, {"name": "<no arguments>", "description": "Run with no parameters to use the widget itself."}]
 helpDoc = HelpDocumentation("Spotify Playback Widget", "Silly little Python script that displays your currently playing song/podcast in a little window at the bottom right of your screen.\nThe window resizes automatically when the song/podcast data changes, and also updates the elapsed time automatically.\nYou can also change its appearance to any theme supported by `ThemedTk` by right clicking anywhere in the main window.",acceptedArguments)
@@ -34,7 +47,7 @@ class SpotiWidget(ThemedTk):
 
     Use the `--help` argument to display help.
     """
-    def __init__(self, theme:str|None = ..., *extraArgs, **extraKeys) -> None:
+    def __init__(self, *extraArgs, **extraKeys) -> None:
         """```markdown
         Initialize the Spotify Display Widget
         
@@ -44,6 +57,10 @@ class SpotiWidget(ThemedTk):
         * `--use-context` - Sets the widget's titlebar to the current context's object name if applicable.
         ```
         """
+        if 'theme' in extraKeys:
+            theme = extraKeys['theme']
+        else:
+            theme = ''
         super().__init__(screenName=None, baseName=None, className="deez nuts", useTk=1, sync=1, use=None, theme=theme, toplevel=1, themebg=1, background=1, gif_override=1)
 
         self.title("Spotify Display Widget")
@@ -68,7 +85,7 @@ class SpotiWidget(ThemedTk):
         self.now_playing:Track|Episode = None
         self.context:Context = None
         self.CURRENT_TRACKID:str = None
-
+        self.use_context = '--use-context' in argv
         self.download_mode = "cache" if "--force-redownload" not in extraArgs else "forced"
         self.cur_file = ""
 
@@ -106,7 +123,7 @@ class SpotiWidget(ThemedTk):
         self.bind("<Button-3>",lambda a: self.rcMenu.tk_popup(a.x_root,a.y_root))
 
     def contextUpdate(self):
-        if self.context and '--use-context' in self.extraArgs:
+        if self.use_context and self.context is not None:
             ctx = contextObject(self.context.type,self.context.id or self.context.uri)
             self.title(ctx.name)
     def refresh_spot(self):
@@ -160,15 +177,14 @@ class SpotiWidget(ThemedTk):
             self.after(250,self.DownloadWindow.withdraw) # Withdraw the window once download is complete.
     def imgtest(self):
         try:
-            nut = Player(cli.current_playback())
+            nut = Player(cli.current_playback('US','episode'))
         except:
             raise
         try:
-            useContext = nut.context and '--use-context' in argv
             if nut:
                 playerItem = nut.item
                 if playerItem:
-                    if not useContext: self.title(playerItem.name)
+                    if not self.use_context: self.title(playerItem.name)
                     hasMedia = len(playerItem.album.images) > 0 if type(playerItem) == Track else len(playerItem.show.images) >0
                     if hasMedia:
                         sillyUrl = playerItem.album.images[0].url if type(playerItem) == Track else playerItem.show.images[0].url
