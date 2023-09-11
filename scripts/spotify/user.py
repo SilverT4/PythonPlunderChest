@@ -1,6 +1,7 @@
 from typing import Any,Annotated
 from spotify.baseObject import SpotifyObject
 from spotify.image import SpotifyImage
+import humanize
 class User(SpotifyObject):
     """
     Custom subclass object representing a Spotify user.
@@ -29,5 +30,5 @@ class User(SpotifyObject):
             self.followers:int = data['followers']['total'] # see artist.py for why i do it like this
         except KeyError:
             self.followers = 0
-        self.widgetText = f'{self.display_name}\n{self.followers} followers'
+        self.widgetText = f'{self.display_name}\n{humanize.intcomma(self.followers)} followers'
         super().__init__(data)

@@ -1,4 +1,5 @@
 from typing import Any
+import humanize
 from spotify.baseObject import SpotifyObject
 from spotify.externalStuff import ExternalURLs
 from spotify.image import SpotifyImage
@@ -32,6 +33,7 @@ class Artist(SpotifyObject):
         except KeyError:
             self.popularity = None
         self.name:str = data['name']
+        self.fcount = humanize.intcomma(self.followers) + " followers"
         super().__init__(data)
     def __str__(self):
         return self.name
