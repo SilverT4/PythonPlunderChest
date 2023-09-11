@@ -130,7 +130,7 @@ class SpotiWidget(ThemedTk):
         while True:
             try:
                 starttime=datetime.now()
-                self.spot = Player(cli.current_playback())
+                self.spot = Player(cli.current_playback('US','episode'))
                 if self.spot.item:
                     self.now_playing = self.spot.item
                     self.CURRENT_TRACKID = self.now_playing.id
@@ -148,12 +148,14 @@ class SpotiWidget(ThemedTk):
 
     def refresh_view(self):
         try:
-            if self.now_playing:
-                NP = self.now_playing # for easy access lmao
-                SP = self.spot
-                PB = self.pbar
+            now = self.spot
+            NP = now.item # for easy access lmao
+            SP = now
+            PB = self.pbar
+            print(now.item.widgetText)
+            if NP:
                 #if self.CURRENT_TRACKID != NP.id or self.cur_file != NP.imgID: self.refresh_image()
-                formatMe = NP.widgetText
+                formatMe = NP.widgetText or NP.name
                 if SP.progress_ms:
                     formatMe += "\n{0} / {1}".format(tlength(SP.progress_ms), tlength(NP.duration_ms))
                     PB.configure(value=SP.progress_ms,maximum=NP.duration_ms)
@@ -161,7 +163,10 @@ class SpotiWidget(ThemedTk):
                     PB.configure(value=randint(0,PB.cget('maximum')))
                 self.svar.set(formatMe)
             else:
-                self.svar.set("No playback information")
+                if SP.progress_ms:
+                    self.svar.set("No playback information\nYour media may be paused.\n\n{0} elapsed".format(tlength(SP.progress_ms)))
+                else:
+                    self.svar.set("No playback information\nYour media may be paused.")
             self.update()
             self.after(1000,self.refresh_view)
         except BaseException:
@@ -185,9 +190,20 @@ class SpotiWidget(ThemedTk):
                 playerItem = nut.item
                 if playerItem:
                     if not self.use_context: self.title(playerItem.name)
-                    hasMedia = len(playerItem.album.images) > 0 if type(playerItem) == Track else len(playerItem.show.images) >0
+                    hasMedia = False
+                    leImg = None
+                    if type(playerItem) is Track:
+                        hasMedia = len(playerItem.album.images) > 0
+                        leImg = playerItem.album.images[0]
+                    elif type(playerItem) is Episode:
+                        if playerItem.show:
+                            hasMedia = len(playerItem.show.images) > 0
+                            leImg = playerItem.show.images[0]
+                        else:
+                            hasMedia = len(playerItem.images) > 0
+                            leImg = playerItem.images[0]
                     if hasMedia:
-                        sillyUrl = playerItem.album.images[0].url if type(playerItem) == Track else playerItem.show.images[0].url
+                        sillyUrl = leImg.url
                         sillyName = "IMG_CACHE/{0}.JPG".format(playerItem.id)
                         if not path.exists(sillyName) or self.download_mode == 'forced':
                             try:
