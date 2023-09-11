@@ -90,6 +90,7 @@ class SpotiWidget(ThemedTk):
         self.ctx = None
         self.CURRENT_TRACKID:str = None
         self.use_context = '--use-context' in argv
+        self.funny = False
         self.download_mode = "cache" if "--force-redownload" not in extraArgs else "forced"
         self.cur_file = ""
 
@@ -161,8 +162,18 @@ class SpotiWidget(ThemedTk):
             SP = now
             PB = self.pbar
             if NP:
-                #if self.CURRENT_TRACKID != NP.id or self.cur_file != NP.imgID: self.refresh_image()
-                formatMe = NP.widgetText or NP.name
+                if '--emotional-damage' in argv: # Try playing Pompeii by Bastille with this flag :)
+                    if NP.name == 'Pompeii':
+                        if type(NP) == Track:
+                            if 'Bastille' in [a.name for a in NP.artists]:
+                                formatMe = "Emotional Damage\nBastille, Steven He\n"
+                                formatMe += NP.album.name
+                                self.funny = True
+                    else:
+                        formatMe = NP.widgetText or NP.name
+                        self.funny = False
+                else:
+                    formatMe = NP.widgetText or NP.name
                 if SP.progress_ms:
                     formatMe += "\n{0} / {1}".format(tlength(SP.progress_ms), tlength(NP.duration_ms))
                     PB.configure(value=SP.progress_ms,maximum=NP.duration_ms)
@@ -191,42 +202,48 @@ class SpotiWidget(ThemedTk):
         else:
             self.after(250,self.DownloadWindow.withdraw) # Withdraw the window once download is complete.
     def imgtest(self):
-        try:
-            nut = Player(cli.current_playback('US','episode'))
-        except:
-            raise
-        try:
-            if nut:
-                playerItem = nut.item
-                if playerItem:
-                    if not self.use_context: self.title(playerItem.name)
-                    hasMedia = False
-                    leImg = None
-                    if type(playerItem) is Track:
-                        hasMedia = len(playerItem.album.images) > 0
-                        leImg = playerItem.album.images[0]
-                    elif type(playerItem) is Episode:
-                        if playerItem.show:
-                            hasMedia = len(playerItem.show.images) > 0
-                            leImg = playerItem.show.images[0]
-                        else:
-                            hasMedia = len(playerItem.images) > 0
-                            leImg = playerItem.images[0]
-                    if hasMedia:
-                        sillyUrl = leImg.url
-                        sillyName = "IMG_CACHE/{0}.JPG".format(playerItem.id)
-                        if not path.exists(sillyName) or self.download_mode == 'forced':
-                            try:
-                                urlretrieve(sillyUrl,sillyName,self.DownloadProgress)
-                            except AttributeError or TypeError:
-                                sillyName = "../gagababy.png"
-                        fard = Image.open(sillyName)
-                        self.mainimage.paste(fard.resize((64,64)))
-                        self.wm_iconphoto(True,fard)
-                else:
-                    pass
-        except TclError:
-            pass
+        if not self.funny:
+            try:
+                nut = Player(cli.current_playback('US','episode'))
+            except:
+                raise
+            try:
+                if nut:
+                    playerItem = nut.item
+                    if playerItem:
+                        if not self.use_context: self.title(playerItem.name)
+                        hasMedia = False
+                        leImg = None
+                        if type(playerItem) is Track:
+                            hasMedia = len(playerItem.album.images) > 0
+                            leImg = playerItem.album.images[0]
+                        elif type(playerItem) is Episode:
+                            if playerItem.show:
+                                hasMedia = len(playerItem.show.images) > 0
+                                leImg = playerItem.show.images[0]
+                            else:
+                                hasMedia = len(playerItem.images) > 0
+                                leImg = playerItem.images[0]
+                        if hasMedia:
+                            sillyUrl = leImg.url
+                            sillyName = "IMG_CACHE/{0}.JPG".format(playerItem.id)
+                            if not path.exists(sillyName) or self.download_mode == 'forced':
+                                try:
+                                    urlretrieve(sillyUrl,sillyName,self.DownloadProgress)
+                                except AttributeError or TypeError:
+                                    sillyName = "../gagababy.png"
+                            fard = Image.open(sillyName)
+                            self.mainimage.paste(fard.resize((64,64)))
+                            self.wm_iconphoto(True,fard)
+                    else:
+                        pass
+            except TclError:
+                pass
+        else:
+            print('emotional damage')
+            fard = Image.open("emotional_damage.jpg")
+            self.mainimage.paste(fard.resize((64,64)))
+            self.wm_iconphoto(True,ImageTk.PhotoImage(fard))
         self.after(1000,self.imgtest)
     
         try:
