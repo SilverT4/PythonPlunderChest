@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from spotipy import Spotify,SpotifyException,SpotifyClientCredentials
 cli = Spotify(client_credentials_manager=SpotifyClientCredentials())
 def contextObject(type:Literal['album','artist','show','playlist'],id:str):
+    print("attempting to download information for ",id)
     match type:
         case 'album':
             return Album(cli.album(id,market='US'))
