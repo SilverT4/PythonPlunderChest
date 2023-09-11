@@ -1,3 +1,4 @@
+import re
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 from globals.impexc import PackageException
@@ -162,13 +163,13 @@ class SpotiWidget(ThemedTk):
             SP = now
             PB = self.pbar
             if NP:
-                if '--emotional-damage' in argv: # Try playing Pompeii by Bastille with this flag :)
-                    if NP.name == 'Pompeii':
+                if '--emotional-damage' in argv: # Try playing Pompeii with this flag :)
+                    if 'Pompeii' in NP.name.title():
                         if type(NP) == Track:
-                            if 'Bastille' in [a.name for a in NP.artists]:
-                                formatMe = "Emotional Damage\nBastille, Steven He\n"
-                                formatMe += NP.album.name
-                                self.funny = True
+                            sex = re.compile(re.escape('pompeii'),flags=re.IGNORECASE)
+                            formatMe = f"{re.sub('pompeii','Emotional Damage',NP.name,flags=re.IGNORECASE)}\n{', '.join([a.name for a in NP.artists])}, Steven He\n"
+                            formatMe += NP.album.name
+                            self.funny = True
                     else:
                         formatMe = NP.widgetText or NP.name
                         self.funny = False
