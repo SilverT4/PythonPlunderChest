@@ -1,3 +1,5 @@
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any
 from globals.impexc import PackageException
 import platform
 from datetime import datetime
@@ -17,7 +19,7 @@ except ImportError:
     raise PackageException('tkinter',sugstring,platform.system() == 'Linux',pkgThings or [])
 from traceback import format_exc, print_exc
 from urllib.request import urlretrieve
-from threading import Thread,ThreadError
+from threading import Thread,ThreadError,Timer
 from globals.helpDocs import HelpDocumentation
 from globals.relativeTime import relative2 as rt
 try:
@@ -41,6 +43,7 @@ if platform.system() == 'Windows':
 
 acceptedArguments = [{"name": "--clean", "description": "Utility with which to clean up the IMG_CACHE folder of the script's directory.\n\nAdd --continue as an argument to open the widget after cleanup."}, {"name": "--force-redownloads", "description": "Force the script to redownload album/show cover images every time, instead of using the cache."}, {"name": "--use-context","description": "When updating the now playing widget, set the title to use the name of the current context object, instead of the current track or episode title."}, {"name": "<no arguments>", "description": "Run with no parameters to use the widget itself."}]
 helpDoc = HelpDocumentation("Spotify Playback Widget", "Silly little Python script that displays your currently playing song/podcast in a little window at the bottom right of your screen.\nThe window resizes automatically when the song/podcast data changes, and also updates the elapsed time automatically.\nYou can also change its appearance to any theme supported by `ThemedTk` by right clicking anywhere in the main window.",acceptedArguments)
+
 class SpotiWidget(ThemedTk):
     """
     Custom subclass of `ThemedTk` to represent the Spotify Playback Widget. Additional arguments come from `sys.argv`, meaning you'd have to run this through the command line to use them.
@@ -73,7 +76,7 @@ class SpotiWidget(ThemedTk):
 
         self.svar = StringVar(self)
 
-        self.mainimage = ImageTk.PhotoImage(Image.open("../gagababy.png").resize((64,64))) # If an exception is raised here, either create a file named "gagababy" in the parent directory, or just change this to another image path on your PC
+        self.mainimage = ImageTk.PhotoImage(Image.open("../gagababy.png").resize((64,64)),master=self) # If an exception is raised here, either create a file named "gagababy" in the parent directory, or just change this to another image path on your PC
         self.mainlabel = Label(self.mainframe,textvariable=self.svar,image=self.mainimage,compound='left')
         self.mainlabel.image = self.mainimage
         self.mainlabel.grid()
@@ -84,6 +87,7 @@ class SpotiWidget(ThemedTk):
         self.spot:Player = None
         self.now_playing:Track|Episode = None
         self.context:Context = None
+        self.ctx = None
         self.CURRENT_TRACKID:str = None
         self.use_context = '--use-context' in argv
         self.download_mode = "cache" if "--force-redownload" not in extraArgs else "forced"
@@ -100,7 +104,7 @@ class SpotiWidget(ThemedTk):
         self.DownloadWindow.withdraw()
 
         # These threads were a suggestion when I was using ChatGPT to try and figure out how to stop the application from freezing so much
-        self.updateThread = Thread(target=self.refresh_spot)
+        self.updateThread = Timer(1,self.refresh_spot)
         self.updateThread.daemon = True
         self.updateThread.start()
 
@@ -123,9 +127,13 @@ class SpotiWidget(ThemedTk):
         self.bind("<Button-3>",lambda a: self.rcMenu.tk_popup(a.x_root,a.y_root))
 
     def contextUpdate(self):
-        if self.use_context and self.context is not None:
-            ctx = contextObject(self.context.type,self.context.id or self.context.uri)
-            self.title(ctx.name)
+        while self.use_context: # It only runs this code if context is used. lmao
+            if self.context is not None:
+                if self.ctx is None or self.ctx.uri != self.context.uri: self.ctx = contextObject(self.context.type,self.context.id or self.context.uri)
+                if self.title() != self.ctx.name: self.title(self.ctx.name)
+            else:
+                self.title("Spotify Playback Widget")
+            sleep(0.5)
     def refresh_spot(self):
         while True:
             try:
@@ -152,7 +160,6 @@ class SpotiWidget(ThemedTk):
             NP = now.item # for easy access lmao
             SP = now
             PB = self.pbar
-            print(now.item.widgetText)
             if NP:
                 #if self.CURRENT_TRACKID != NP.id or self.cur_file != NP.imgID: self.refresh_image()
                 formatMe = NP.widgetText or NP.name
@@ -169,6 +176,9 @@ class SpotiWidget(ThemedTk):
                     self.svar.set("No playback information\nYour media may be paused.")
             self.update()
             self.after(1000,self.refresh_view)
+        except AttributeError as ae:
+            if ae.name == 'item': self.after(1000,self.refresh_view)
+            else: raise
         except BaseException:
             raise
 
@@ -293,6 +303,9 @@ if "--clean" in argv:
             finally:
                 print(file)
         if not "--continue" in argv: quit() # Specify "--continue" in the CLI to open the widget proper after cleanup
+        else:
+            chdir("..") # to not break the main widget
+            root.quit()
     lbl = Label(rootFrame,text="By cleaning the image cache, image downloads may take longer to complete.\nDo you wish to continue?",image="::tk::icons::question",compound="top")
     lbl.grid(columnspan=2)
     btYes = Button(rootFrame,text='Yes',underline=1,command=cleanup)
