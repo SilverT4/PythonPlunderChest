@@ -7,7 +7,6 @@ from spotify.audiobook import Chapter,Audiobook
 from spotify.playlist import Playlist
 from spotify.user import User
 from spotify.player import Player,Device
-from spotify.podcast import Show,Episode
 from spotify.track import Track
 from spotify.image import SpotifyImage
 from spotify.baseObject import SpotifyObject
@@ -37,6 +36,7 @@ def devices():
     resp = cli.devices()
     return [Device(d) for d in resp['devices']]
 
+from spotify.podcast import Show,Episode
 def convert(data:dict[str,any],to:str) -> Album|Artist|Audiobook|Chapter|Episode|Playlist|Show|Track|User|Device|Player|SpotifyImage|CopyrightObject | CopyrightObject: # I probably won't use this, but I'm including it anyway.
     objs:dict[str,Album|Artist|Audiobook|Chapter|Episode|Playlist|Show|Track|User|Device|Player|SpotifyImage|CopyrightObject] = {"album": Album, "artist": Artist, "audiobook": Audiobook, "chapter": Chapter, "episode": Episode, "show": Show, "playlist": Playlist, "player": Player, "track": Track, "user": User, "image": SpotifyImage, "copyright": CopyrightObject}
     if to.lower() in objs:
@@ -49,6 +49,59 @@ def getimg(name:str) -> str|None:
     return None
 def download_image(from_:str,to:str,callback:Callable):
     urlretrieve(from_,to,callback)
+
+def formatn(n,s):
+    if n == 1:
+        return '{n} {s}'.format(n,s)
+    else:
+        return '{n} {s}s'.format(n,s)
+    
+def formatl(u:dict[str,int]):
+    "this formats the length string for podcasts atm"
+    finalString = ""
+    
+def tlen(ms):
+    # Convert milliseconds to seconds
+    seconds = ms / 1000
+
+    # Use divmod to get hours, minutes, and remaining seconds
+    hours, remainder = [round(t) for t in divmod(seconds, 3600)]
+    minutes, seconds = [round(t) for t in divmod(remainder, 60)]
+
+    formatted_time = ""
+
+    if hours > 0:
+        formatted_time += f"{hours}:"
+    
+    if minutes < 10:
+        formatted_time += f"0{minutes}:"
+    else: formatted_time += f"{minutes}:"
+
+    if seconds < 10:
+        formatted_time += f"0{seconds}:"
+    else: formatted_time += f"{seconds}:"
+
+    return formatted_time
+
+def runtime(ms):
+    # Convert milliseconds to seconds
+    seconds = ms / 1000
+
+    # Use divmod to get hours, minutes, and remaining seconds
+    hours, remainder = [round(t) for t in divmod(seconds, 3600)]
+    minutes, seconds = [round(t) for t in divmod(remainder, 60)]
+
+    formatted_time = []
+
+    # Use the formatn function to format hours, minutes, and seconds
+    if hours > 0:
+        formatted_time.append(formatn(hours, "hour"))
+    if minutes > 0:
+        formatted_time.append(formatn(minutes, "minute"))
+    if seconds > 0:
+        formatted_time.append(formatn(seconds, "second"))
+
+    return ', '.join(formatted_time)
 
 import tkinter as tk
 import tkinter.ttk as ttk
