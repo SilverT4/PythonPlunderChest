@@ -1,6 +1,7 @@
 from typing import Any
 from spotify.SpotifyClient import cli
 from spotify.baseObject import SpotifyObject
+from spotify.iterator import SpotifyIterable
 from spotify.legalese import CopyrightObject
 class Chapter(SpotifyObject):
     """
@@ -51,7 +52,7 @@ class Audiobook(SpotifyObject):
     """
     def __init__(self, data: dict[str, Any]):
         self.authors:list = data['authors'] if 'authors' in data else None
-        self.chapters:list[Chapter] = [Chapter(c) for c in data['chapters']] if 'chapters' in data else None
+        self.chapters:SpotifyIterable = SpotifyIterable(data['chapters'],'chapter',Chapter) if 'chapters' in data else None
         self.copyrights:list[CopyrightObject] = [CopyrightObject(c) for c in data['copyrights']] if 'copyrights' in data else None
         self.description:str = data['description'] if 'description' in data else None
         self.edition:str = data['edition'] if 'edition' in data else None
