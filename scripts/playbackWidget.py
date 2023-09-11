@@ -244,7 +244,7 @@ class SpotiWidget(ThemedTk):
             print('emotional damage')
             fard = Image.open("emotional_damage.jpg")
             self.mainimage.paste(fard.resize((64,64)))
-            self.wm_iconphoto(True,ImageTk.PhotoImage(fard))
+            self.wm_iconphoto(True,ImageTk.PhotoImage(fard,master=self))
         self.after(1000,self.imgtest)
     
         try:
