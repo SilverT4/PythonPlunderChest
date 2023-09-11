@@ -1,5 +1,6 @@
 from typing import Any
 from spotify.baseObject import SpotifyObject
+from spotify.length import runtime
 class Episode(SpotifyObject):
     """
     Custom subclass object to represent a podcast episode object.
@@ -33,11 +34,23 @@ class Episode(SpotifyObject):
         self.release_date_precision:str = data['release_date_precision']
         try:
             self.show:Show = Show(data['show'])
-            self.widgetText = self.show.widgetText
         except KeyError:
             self.show = None
-            self.widgetText = self.name+'\n\n'
+        self.widgetText:str = self.format_widget()
         super().__init__(data)
+
+    def format_widget(self):
+        finalString:str = self.name
+        if self.show:
+            s = self.show # for easy access
+            if s.publisher == s.name:
+                finalString += "\n"
+                finalString += s.name
+            else:
+                finalString += "\n"
+                finalString += f"{s.name} by {s.publisher}"
+        finalString += f"\nEstimated runtime: {runtime(self.duration_ms)}"
+        return finalString
 class EpisodeList():
     """
     Custom class object to represent the list of episodes in a Spotify podcast.
@@ -87,6 +100,6 @@ class Show(SpotifyObject):
         self.name:str = data['name']
         self.publisher:str = data['publisher']
         self.total_episodes:int = data['total_episodes']
-        self.episodes = EpisodeList(data['episodes'])
-        self.widgetText = f'{self.name}\n{self.publisher}\n'
+        self.episodes = EpisodeList(data['episodes']) if 'episodes' in data else None
+        self.widgetText = f'{self.name} by {self.publisher}\n'
         super().__init__(data)
