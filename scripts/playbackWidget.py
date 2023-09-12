@@ -123,7 +123,7 @@ class SpotiWidget(ThemedTk):
         self.updThr3.start()
         self.after(1000,self.refresh_view)
 
-        self.rcMenu = Menu(tearoff=0)
+        self.rcMenu = Menu(self,tearoff=0)
         for theme in self.themes:
             self.rcMenu.add_radiobutton(label=theme,value=theme,variable=self.current_theme,command=partial(self.set_theme,theme,1,1))
         self.bind("<Button-3>",lambda a: self.rcMenu.tk_popup(a.x_root,a.y_root))
@@ -295,7 +295,12 @@ if "--clean" in argv:
     def cleanup(s:Event=None):
         from os import chdir,remove,listdir
         from time import sleep
-        from winsound import PlaySound,SND_FILENAME as sfn
+        if platform.system() == 'Windows':
+            from winsound import PlaySound as PS,SND_FILENAME as SFN, SND_ASYNC as SAS, SND_NOSTOP as SNS, SND_NOWAIT as SNW
+            win = True
+        else:
+            from playsound import playsound
+            win = False
         chdir("IMG_CACHE")
         files = listdir()
         lbl.configure(text="Now cleaning up the image cache folder...",image="::tk::icons::information")
@@ -304,26 +309,54 @@ if "--clean" in argv:
         pbar = Progressbar(rootFrame,value=0,maximum=len(files))
         pbar.grid(row=1,columnspan=2)
         lmao = StringVar()
-        Label(rootFrame,textvariable=lmao).grid(columnspan=2)
+        Label(rootFrame,name="file",textvariable=lmao).grid(columnspan=2)
         lb = Listbox(rootFrame)
+        i=0
+        fails = 0
         for file in files:
             sleep(0.25)
             lmao.set(file)
-            pbar.step()
+            pbar.configure(value=i)
             root.update()
             try:
                 remove(file)
             except FileNotFoundError:
                 print(f"COULD NOT FIND {file.upper()}, WAS IT DELETED MANUALLY??")
-                PlaySound("../../random-sounds/mparty8_ballyhoo_09.wav",sfn)
+                fails += 1
+                lb.insert(END,f"Could not delete {file} as it could not be found.")
+                if not win: playsound("../../random-sounds/mparty8_ballyhoo_09.wav",block=False)
+                else: 
+                    try:
+                        PS("../../random-sounds/mparty8_ballyhoo_09.wav",SFN | SAS | SNS | SNW)
+                    except RuntimeError:
+                        print("could not play funni ballyhoo sound, rip")
             except PermissionError as egg:
                 lb.insert(END,f"{egg.filename} could not be deleted.")
+                fails += 1
+            except TclError:
+                finish()
             finally:
+                i+=1
                 print(file)
-        if not "--continue" in argv: quit() # Specify "--continue" in the CLI to open the widget proper after cleanup
+        pbar.forget()
+        rootFrame.children['file'].forget()
+        def finish():
+            if not "--continue" in argv: quit() # Specify "--continue" in the CLI to open the widget proper after cleanup
+            else:
+                chdir("..") # to not break the main widget
+                root.destroy()
+        if fails > 0:
+            sbx = Scrollbar(rootFrame,orient='horizontal',command=lb.xview)
+            sby = Scrollbar(rootFrame,orient='vertical',command=lb.yview)
+            lbl.configure(text=f"Could not remove {fails} file(s), please review before exiting:",image="::tk::icons::warning")
+            lb.configure(xscrollcommand=sbx.set,yscrollcommand=sby.set)
+            lb.grid(row=1,column=0)
+            sbx.grid(row=2,column=0,sticky='we')
+            sby.grid(row=1,column=1,sticky='ns')
         else:
-            chdir("..") # to not break the main widget
-            root.quit()
+            pbar.configure(value=len(files))
+            lbl.configure(text="Files have been cleaned up.")
+        Button(rootFrame,text="Exit",command=finish).grid(row=999,columnspan=2)
     lbl = Label(rootFrame,text="By cleaning the image cache, image downloads may take longer to complete.\nDo you wish to continue?",image="::tk::icons::question",compound="top")
     lbl.grid(columnspan=2)
     btYes = Button(rootFrame,text='Yes',underline=1,command=cleanup)
