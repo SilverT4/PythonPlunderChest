@@ -173,5 +173,10 @@ gagababy.png
 random-sounds/mk64_toad05.wav
 random-sounds/mparty8_ballyhoo_09.wav
 
+# Also ignore Nintendo sounds
+random-sounds/Wii U Menu SFX/
+random-sounds/DSi Browser Sounds/
+random-sounds/shop/
+
 # ignore thumbs
 Thumbs.db
